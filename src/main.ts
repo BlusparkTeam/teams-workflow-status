@@ -1,7 +1,7 @@
 /******************************************************************************\
  * Main entrypoint for GitHib Action. Fetches information regarding the       *
  * currently running Workflow and it's Jobs. Sends individual job status and  *
- * workflow status as a formatted notification to the Slack Webhhok URL set   *
+ * workflow status as a formatted notification to the Teams Webhhok URL set   *
  * in the environment variables.                                              *
  *                                                                            *
  * Org: Gamesight <https://gamesight.io>                                      *
@@ -13,8 +13,7 @@
 
 import * as core from '@actions/core'
 import {context, getOctokit} from '@actions/github'
-import {IncomingWebhook} from '@slack/webhook'
-import {MessageAttachment} from '@slack/types'
+import {IncomingWebhook} from 'ms-teams-webhook'
 
 // HACK: https://github.com/octokit/types.ts/issues/205
 interface PullRequest {
@@ -42,7 +41,6 @@ interface PullRequest {
 }
 
 type IncludeJobs = 'true' | 'false' | 'on-failure'
-type SlackMessageAttachementFields = MessageAttachment['fields']
 
 process.on('unhandledRejection', handleError)
 main().catch(handleError) // eslint-disable-line github/no-then
@@ -50,7 +48,7 @@ main().catch(handleError) // eslint-disable-line github/no-then
 // Action entrypoint
 async function main(): Promise<void> {
   // Collect Action Inputs
-  const webhook_url = core.getInput('slack_webhook_url', {
+  const webhook_url = core.getInput('teams_webhook_url', {
     required: true
   })
   const github_token = core.getInput('repo_token', {required: true})
@@ -62,10 +60,8 @@ async function main(): Promise<void> {
     core.getInput('include_commit_message', {
       required: true
     }) === 'true'
-  const slack_channel = core.getInput('channel')
-  const slack_name = core.getInput('name')
-  const slack_icon = core.getInput('icon_url')
-  const slack_emoji = core.getInput('icon_emoji') // https://www.webfx.com/tools/emoji-cheat-sheet/
+  //const slack_icon = core.getInput('icon_url') // see what to do here
+  //const slack_emoji = core.getInput('icon_emoji')  // see what to do here // https://www.webfx.com/tools/emoji-cheat-sheet/
   // Force as secret, forces *** when trying to print or log values
   core.setSecret(github_token)
   core.setSecret(webhook_url)
@@ -94,7 +90,8 @@ async function main(): Promise<void> {
   let workflow_color // can be good, danger, warning or a HEX colour (#00FF00)
   let workflow_msg
 
-  let job_fields: SlackMessageAttachementFields
+  // TODO: look at what data is proccessed here and do the same for teams
+  let job_fields: {title: string; short: boolean; value: string}[]
 
   if (
     completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))
@@ -143,9 +140,14 @@ async function main(): Promise<void> {
     })
 
     return {
-      title: '', // FIXME: it's required in slack type, we should workaround that somehow
-      short: true,
-      value: `${job_status_icon} <${job.html_url}|${job.name}> (${job_duration})`
+      type: "TableCell",
+      items: [
+        {
+            "type": "TextBlock",
+            "text": `${job_status_icon} [${job.name}](${job.html_url}) \`${job_duration}\``,
+            "wrap": true
+        }
+      ]
     }
   })
 
@@ -153,14 +155,14 @@ async function main(): Promise<void> {
   const workflow_duration = compute_duration({
     start: new Date(workflow_run.created_at),
     end: new Date(workflow_run.updated_at)
-  })
-  const repo_url = `<${workflow_run.repository.html_url}|*${workflow_run.repository.full_name}*>`
-  const branch_url = `<${workflow_run.repository.html_url}/tree/${workflow_run.head_branch}|*${workflow_run.head_branch}*>`
-  const workflow_run_url = `<${workflow_run.html_url}|#${workflow_run.run_number}>`
+  });
+  const repo_url = `[${workflow_run.repository.full_name}](${workflow_run.repository.html_url})`;
+  const branch_url = `[${workflow_run.head_branch}](${workflow_run.repository.html_url}/tree/${workflow_run.head_branch})`;
+  const workflow_run_url = `[${workflow_run.run_number}](${workflow_run.html_url})`;
   // Example: Success: AnthonyKinson's `push` on `master` for pull_request
-  let status_string = `${workflow_msg} ${context.actor}'s \`${context.eventName}\` on \`${branch_url}\``
+  let status_string = `${workflow_msg} ${context.actor}'s \`${context.eventName}\` on \`${branch_url}\``;
   // Example: Workflow: My Workflow #14 completed in `1m 30s`
-  const details_string = `Workflow: ${context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``
+  const details_string = `Workflow: ${context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``;
 
   // Build Pull Request string if required
   const pull_requests = (workflow_run.pull_requests as PullRequest[])
@@ -172,45 +174,186 @@ async function main(): Promise<void> {
       pull_request =>
         `<${workflow_run.repository.html_url}/pull/${pull_request.number}|#${pull_request.number}> from \`${pull_request.head.ref}\` to \`${pull_request.base.ref}\``
     )
-    .join(', ')
+    .join(', ');
 
   if (pull_requests !== '') {
-    status_string = `${workflow_msg} ${context.actor}'s \`pull_request\` ${pull_requests}`
+    status_string = `${workflow_msg} ${context.actor}'s \`pull_request\` ${pull_requests}`;
   }
 
-  const commit_message = `Commit: ${workflow_run.head_commit.message}`
+  const commit_message = `Commit: ${workflow_run.head_commit.message}`;
 
-  // We're using old style attachments rather than the new blocks because:
-  // - Blocks don't allow colour indicators on messages
-  // - Block are limited to 10 fields. >10 jobs in a workflow results in payload failure
+  const msteams = new MSTeams();
+  await msteams.notify(webhook_url, msteams.generatePayload(status_string, details_string, repo_url, job_fields, include_commit_message, commit_message));
+  core.info('Sent message to Microsoft Teams');
+}
 
-  // Build our notification attachment
-  const slack_attachment = {
-    mrkdwn_in: ['text' as const],
-    color: workflow_color,
-    text: [status_string, details_string]
-      .concat(include_commit_message ? [commit_message] : [])
-      .join('\n'),
-    footer: repo_url,
-    footer_icon: 'https://github.githubassets.com/favicon.ico',
-    fields: job_fields
+
+class MSTeams {
+  /**
+   * Generate msteams payload
+   * @return
+   */
+  async generatePayload(
+    status_string: string,
+    details_string: string,
+    repo_url: string,
+    job_fields: any,
+    include_commit_message: boolean,
+    commit_message: any
+  ) {
+    const headerTitle = {
+      type: 'TextBlock',
+      size: 'Medium',
+      weight: 'Bolder',
+      text: [status_string]
+        .join('\n'),
+      style: 'heading',
+      wrap: true
+    };
+    const detailLog = [
+      {
+        type: 'TextBlock',
+        weight: 'lighter',
+        text: [details_string]
+          .concat(include_commit_message ? [commit_message] : [])
+          .join('\n'),
+        wrap: true
+      }
+    ];
+    const repositoryLink = [
+      {
+        type: 'ColumnSet',
+        columns: [
+          {
+            type: 'Column',
+            items: [
+              {
+                type: 'Image',
+                style: 'person',
+                url: 'https://github.githubassets.com/favicon.ico',
+                altText: 'github',
+                size: 'small'
+              }
+            ],
+            width: 'auto'
+          },
+          {
+            type: 'Column',
+            items: [
+              {
+                type: 'TextBlock',
+                size: 'Medium',
+                weight: 'lighter',
+                text: repo_url,
+              }
+            ],
+            width: 'stretch'
+          }
+        ]
+      }
+    ];
+    let jobsRows = [];
+    for (let i = 0; i < job_fields.length; i++) {
+      if (i % 3 === 0) {
+        let rowCells = [];
+        if (i+2 < job_fields.length) {
+          rowCells.push(
+            {
+              type: 'TableCell',
+              items: job_fields[i]
+            }
+          );
+          rowCells.push(
+            {
+              type: 'TableCell',
+              items: job_fields[i+1]
+            }
+          );
+          rowCells.push(
+            {
+              type: 'TableCell',
+              items: job_fields[i+2]
+            }
+          );
+        }
+        else if (i+1 < job_fields.length) {
+          rowCells.push(
+            {
+              type: 'TableCell',
+              items: job_fields[i]
+            }
+          );
+          rowCells.push(
+            {
+              type: 'TableCell',
+              items: job_fields[i+1]
+            }
+          );
+        }
+        else {
+          rowCells.push(
+            {
+              type: 'TableCell',
+              items: job_fields[i]
+            }
+          );
+        }
+        
+        jobsRows.push({
+          type: 'TableRow',
+          cells: rowCells,
+          style: 'default'
+        });
+      }
+    }
+    const jobTable = {
+      type: "Table",
+      columns: [{
+          width: 1
+        },{
+          width: 1
+        },{
+          width: 1
+        }
+      ],
+      rows: jobsRows,
+      showGridLines: false
+    }
+
+    return {
+      'type': 'message',
+      attachments: [{
+        contentType: 'application/vnd.microsoft.card.adaptive',
+        content: {
+          type: 'AdaptiveCard',
+          body: [
+            headerTitle,
+            ...detailLog,
+            jobTable,
+            repositoryLink
+          ],
+          '$schema': 'http://adaptivecards.io/schemas/adaptive-card.json',
+          version: '1.5',
+          msteams: {  
+            entities: [{}]
+          }
+        }
+      }]
+    };
   }
-  // Build our notification payload
-  const slack_payload_body = {
-    attachments: [slack_attachment],
-    ...(slack_name && {username: slack_name}),
-    ...(slack_channel && {channel: slack_channel}),
-    ...(slack_emoji && {icon_emoji: slack_emoji}),
-    ...(slack_icon && {icon_url: slack_icon})
-  }
 
-  const slack_webhook = new IncomingWebhook(webhook_url)
+  /**
+   * Notify information about github actions to MSTeams
+   * @param any url
+   * @param  any payload
+   * @returns {Promise} result
+   */
+  async notify(url: any, payload: any) {
+    const client = new IncomingWebhook(url);
+    const response = await client.sendRawAdaptiveCard(payload);
 
-  try {
-    await slack_webhook.send(slack_payload_body)
-  } catch (err) {
-    if (err instanceof Error) {
-      core.setFailed(err.message)
+    if (response.status !== 202) {
+      throw new Error('Failed to send notification to Microsoft Teams.\n' + 'Response:\n' + JSON.stringify(response, null, 2));
     }
   }
 }

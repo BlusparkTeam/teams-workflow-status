@@ -1,18 +1,18 @@
 {
-  "name": "slack-workflow-status",
-  "description": "A Github Action for sending Workflow run results to Slack",
+  "name": "teams-workflow-status",
+  "description": "A Github Action for sending Workflow run results to Teams",
   "version": "1.1.0",
-  "author": "Anthony Kinson",
+  "author": "Kevin de Carvalho",
   "license": "MIT",
   "main": "dist/index.js",
   "private": false,
   "bugs": {
-    "url": "https://github.com/Gamesight/slack-workflow-status/issues"
+    "url": "https://github.com/BlusparkTeam/teams-workflow-status/issues"
   },
-  "homepage": "https://github.com/Gamesight/slack-workflow-status#readme",
+  "homepage": "https://github.com/BlusparkTeam/teams-workflow-status#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Gamesight/slack-workflow-status.git"
+    "url": "git+https://github.com/BlusparkTeam/teams-workflow-status.git"
   },
   "engines": {
     "node": ">=20.11.0"
@@ -25,7 +25,7 @@
   "dependencies": {
     "@actions/core": ">= 1.10.0",
     "@actions/github": ">= 4.0.0",
-    "@slack/webhook": "^7.0.2"
+    "ms-teams-webhook": "^2.2.2"
   },
   "devDependencies": {
     "@types/node": "^14.14.9",
