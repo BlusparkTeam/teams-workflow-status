@@ -83,7 +83,7 @@ async function main(): Promise<void> {
   })
 
   const completed_jobs = jobs_response.jobs.filter(
-    job => job.status === 'completed'
+    (job: any) => job.status === 'completed'
   )
 
   // Configure slack attachment styling
@@ -91,17 +91,17 @@ async function main(): Promise<void> {
   let workflow_msg
 
   // TODO: look at what data is proccessed here and do the same for teams
-  let job_fields: {title: string; short: boolean; value: string}[]
+  let job_fields: any[]
 
   if (
-    completed_jobs.every(job => ['success', 'skipped'].includes(job.conclusion))
+    completed_jobs.every((job: any) => ['success', 'skipped'].includes(job.conclusion))
   ) {
     workflow_color = 'good'
     workflow_msg = 'Success:'
     if (include_jobs === 'on-failure') {
       job_fields = []
     }
-  } else if (completed_jobs.some(job => job.conclusion === 'cancelled')) {
+  } else if (completed_jobs.some((job : any) => job.conclusion === 'cancelled')) {
     workflow_color = 'warning'
     workflow_msg = 'Cancelled:'
     if (include_jobs === 'on-failure') {
@@ -118,7 +118,7 @@ async function main(): Promise<void> {
   }
 
   // Build Job Data Fields
-  job_fields ??= completed_jobs.map(job => {
+  job_fields ??= completed_jobs.map((job : any) => {
     let job_status_icon
 
     switch (job.conclusion) {
@@ -180,7 +180,7 @@ async function main(): Promise<void> {
     status_string = `${workflow_msg} ${context.actor}'s \`pull_request\` ${pull_requests}`;
   }
 
-  const commit_message = `Commit: ${workflow_run.head_commit.message}`;
+  const commit_message = `Commit: ${workflow_run.head_commit?.message}`;
 
   const msteams = new MSTeams();
   await msteams.notify(webhook_url, msteams.generatePayload(status_string, details_string, repo_url, job_fields, include_commit_message, commit_message));
