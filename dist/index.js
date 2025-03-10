@@ -86504,12 +86504,15 @@ function main() {
                     {
                         type: "Column",
                         width: "auto",
+                        verticalContentAlignment: "Center",
                         items: [
                             {
                                 type: "TextBlock",
                                 text: `${job_status_icon}`,
                                 wrap: true,
-                                horizontalAlignment: "Center"
+                                horizontalAlignment: "Center",
+                                fontType: "Monospace",
+                                size: "Medium"
                             }
                         ]
                     },
