@@ -86561,71 +86561,51 @@ class MSTeams {
                 wrap: true
             }
         ];
-        const repositoryLink = [
-            {
-                type: 'ColumnSet',
-                columns: [
-                    {
-                        type: 'Column',
-                        items: [
-                            {
-                                type: 'Image',
-                                style: 'person',
-                                url: 'https://github.githubassets.com/favicon.ico',
-                                altText: 'github',
-                                size: 'small'
-                            }
-                        ],
-                        width: 'auto'
-                    },
-                    {
-                        type: 'Column',
-                        items: [
-                            {
-                                type: 'TextBlock',
-                                size: 'Medium',
-                                weight: 'lighter',
-                                text: repo_url,
-                            }
-                        ],
-                        width: 'stretch'
-                    }
-                ]
-            }
-        ];
+        const repositoryLink = {
+            type: 'ColumnSet',
+            columns: [
+                {
+                    type: 'Column',
+                    items: [
+                        {
+                            type: 'Image',
+                            style: 'person',
+                            url: 'https://github.githubassets.com/favicon.ico',
+                            altText: 'github',
+                            size: 'small'
+                        }
+                    ],
+                    width: 'auto'
+                },
+                {
+                    type: 'Column',
+                    items: [
+                        {
+                            type: 'TextBlock',
+                            size: 'Medium',
+                            weight: 'lighter',
+                            text: repo_url,
+                        }
+                    ],
+                    width: 'stretch'
+                }
+            ]
+        };
         let jobsRows = [];
         for (let i = 0; i < job_fields.length; i++) {
             if (i % 3 === 0) {
                 let rowCells = [];
                 if (i + 2 < job_fields.length) {
-                    rowCells.push({
-                        type: 'TableCell',
-                        items: job_fields[i]
-                    });
-                    rowCells.push({
-                        type: 'TableCell',
-                        items: job_fields[i + 1]
-                    });
-                    rowCells.push({
-                        type: 'TableCell',
-                        items: job_fields[i + 2]
-                    });
+                    rowCells.push(job_fields[i]);
+                    rowCells.push(job_fields[i + 1]);
+                    rowCells.push(job_fields[i + 2]);
                 }
                 else if (i + 1 < job_fields.length) {
-                    rowCells.push({
-                        type: 'TableCell',
-                        items: job_fields[i]
-                    });
-                    rowCells.push({
-                        type: 'TableCell',
-                        items: job_fields[i + 1]
-                    });
+                    rowCells.push(job_fields[i]);
+                    rowCells.push(job_fields[i + 1]);
                 }
                 else {
-                    rowCells.push({
-                        type: 'TableCell',
-                        items: job_fields[i]
-                    });
+                    rowCells.push(job_fields[i]);
                 }
                 jobsRows.push({
                     type: 'TableRow',
