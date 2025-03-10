@@ -140,12 +140,34 @@ async function main(): Promise<void> {
     })
 
     return {
-      type: "TableCell",
-      items: [
+      type: "ColumnSet",
+      columns: [
         {
-            "type": "TextBlock",
-            "text": `${job_status_icon} [${job.name}](${job.html_url}) \`${job_duration}\``,
-            "wrap": true
+          type: "Column",
+          width: "auto",
+          verticalContentAlignment: "Center",
+          items: [
+            {
+              type: "TextBlock",
+              text: `${job_status_icon}`,
+              wrap: true,
+              horizontalAlignment: "Center",
+              fontType: "Monospace",
+              size: "Medium"
+            }
+          ]
+        },
+        {
+          type: "Column",
+          width: "stretch",
+          items: [
+            {
+              type: "TextBlock",
+              size: "Medium",
+              weight: "Lighter",
+              text: `[${job.name}](${job.html_url}) \`${job_duration}\``
+            }
+          ]
         }
       ]
     }
@@ -160,7 +182,7 @@ async function main(): Promise<void> {
   const branch_url = `[${workflow_run.head_branch}](${workflow_run.repository.html_url}/tree/${workflow_run.head_branch})`;
   const workflow_run_url = `[${workflow_run.run_number}](${workflow_run.html_url})`;
   // Example: Success: AnthonyKinson's `push` on `master` for pull_request
-  let status_string = `${workflow_msg} ${context.actor}'s \`${context.eventName}\` on \`${branch_url}\``;
+  let status_string = `${workflow_msg} ${context.actor}'s ${context.eventName} on ${branch_url}`;
   // Example: Workflow: My Workflow #14 completed in `1m 30s`
   const details_string = `Workflow: ${context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``;
 
@@ -193,7 +215,7 @@ class MSTeams {
    * Generate msteams payload
    * @return
    */
-  async generatePayload(
+  generatePayload(
     status_string: string,
     details_string: string,
     repo_url: string,
@@ -207,7 +229,6 @@ class MSTeams {
       weight: 'Bolder',
       text: [status_string]
         .join('\n'),
-      style: 'heading',
       wrap: true
     };
     const detailLog = [
@@ -220,105 +241,36 @@ class MSTeams {
         wrap: true
       }
     ];
-    const repositoryLink = [
-      {
-        type: 'ColumnSet',
-        columns: [
-          {
-            type: 'Column',
-            items: [
-              {
-                type: 'Image',
-                style: 'person',
-                url: 'https://github.githubassets.com/favicon.ico',
-                altText: 'github',
-                size: 'small'
-              }
-            ],
-            width: 'auto'
-          },
-          {
-            type: 'Column',
-            items: [
-              {
-                type: 'TextBlock',
-                size: 'Medium',
-                weight: 'lighter',
-                text: repo_url,
-              }
-            ],
-            width: 'stretch'
-          }
-        ]
-      }
-    ];
-    let jobsRows = [];
-    for (let i = 0; i < job_fields.length; i++) {
-      if (i % 3 === 0) {
-        let rowCells = [];
-        if (i+2 < job_fields.length) {
-          rowCells.push(
+    const repositoryLink ={
+      type: 'ColumnSet',
+      columns: [
+        {
+          type: 'Column',
+          items: [
             {
-              type: 'TableCell',
-              items: job_fields[i]
+              type: 'Image',
+              style: 'person',
+              url: 'https://github.githubassets.com/favicon.ico',
+              altText: 'github',
+              size: 'small'
             }
-          );
-          rowCells.push(
+          ],
+          width: 'auto'
+        },
+        {
+          type: 'Column',
+          items: [
             {
-              type: 'TableCell',
-              items: job_fields[i+1]
+              type: 'TextBlock',
+              size: 'Medium',
+              weight: 'lighter',
+              text: repo_url,
             }
-          );
-          rowCells.push(
-            {
-              type: 'TableCell',
-              items: job_fields[i+2]
-            }
-          );
+          ],
+          width: 'stretch'
         }
-        else if (i+1 < job_fields.length) {
-          rowCells.push(
-            {
-              type: 'TableCell',
-              items: job_fields[i]
-            }
-          );
-          rowCells.push(
-            {
-              type: 'TableCell',
-              items: job_fields[i+1]
-            }
-          );
-        }
-        else {
-          rowCells.push(
-            {
-              type: 'TableCell',
-              items: job_fields[i]
-            }
-          );
-        }
-        
-        jobsRows.push({
-          type: 'TableRow',
-          cells: rowCells,
-          style: 'default'
-        });
-      }
-    }
-    const jobTable = {
-      type: "Table",
-      columns: [{
-          width: 1
-        },{
-          width: 1
-        },{
-          width: 1
-        }
-      ],
-      rows: jobsRows,
-      showGridLines: false
-    }
+      ]
+    };
 
     return {
       'type': 'message',
@@ -329,7 +281,7 @@ class MSTeams {
           body: [
             headerTitle,
             ...detailLog,
-            jobTable,
+            ...job_fields,
             repositoryLink
           ],
           '$schema': 'http://adaptivecards.io/schemas/adaptive-card.json',
@@ -350,8 +302,8 @@ class MSTeams {
    */
   async notify(url: any, payload: any) {
     const client = new IncomingWebhook(url);
-    const response = await client.sendRawAdaptiveCard(payload);
     core.info(`Generated payload for Microsoft Teams:\n${JSON.stringify(payload, null, 2)}`);
+    const response = await client.sendRawAdaptiveCard(payload);
     if (response.status !== 202) {
       throw new Error('Failed to send notification to Microsoft Teams.\n' + 'Response:\n' + JSON.stringify(response, null, 2));
     }
