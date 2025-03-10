@@ -86499,12 +86499,19 @@ function main() {
                 end: new Date(job.completed_at)
             });
             return {
-                type: "TableCell",
-                items: [
+                type: "ColumnSet",
+                columns: [
                     {
-                        "type": "TextBlock",
-                        "text": `${job_status_icon} [${job.name}](${job.html_url}) \`${job_duration}\``,
-                        "wrap": true
+                        type: "TextBlock",
+                        text: `${job_status_icon}`,
+                        wrap: true,
+                        horizontalAlignment: "Center"
+                    },
+                    {
+                        type: "TextBlock",
+                        size: "Medium",
+                        weight: "Lighter",
+                        text: `[${job.name}](${job.html_url}) \`${job_duration}\``
                     }
                 ]
             };
@@ -86591,42 +86598,6 @@ class MSTeams {
                 }
             ]
         };
-        let jobsRows = [];
-        for (let i = 0; i < job_fields.length; i++) {
-            if (i % 3 === 0) {
-                let rowCells = [];
-                if (i + 2 < job_fields.length) {
-                    rowCells.push(job_fields[i]);
-                    rowCells.push(job_fields[i + 1]);
-                    rowCells.push(job_fields[i + 2]);
-                }
-                else if (i + 1 < job_fields.length) {
-                    rowCells.push(job_fields[i]);
-                    rowCells.push(job_fields[i + 1]);
-                }
-                else {
-                    rowCells.push(job_fields[i]);
-                }
-                jobsRows.push({
-                    type: 'TableRow',
-                    cells: rowCells,
-                    style: 'default'
-                });
-            }
-        }
-        const jobTable = {
-            type: "Table",
-            columns: [{
-                    width: 1
-                }, {
-                    width: 1
-                }, {
-                    width: 1
-                }
-            ],
-            rows: jobsRows,
-            showGridLines: false
-        };
         return {
             'type': 'message',
             attachments: [{
@@ -86636,7 +86607,7 @@ class MSTeams {
                         body: [
                             headerTitle,
                             ...detailLog,
-                            jobTable,
+                            ...job_fields,
                             repositoryLink
                         ],
                         '$schema': 'http://adaptivecards.io/schemas/adaptive-card.json',
