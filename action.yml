@@ -1,6 +1,6 @@
-name: 'Slack Workflow Notifications'
+name: 'Teams Workflow Notifications'
 author: 'Anthony Kinson'
-description: 'A Github Action for sending Workflow run results to Slack'
+description: 'A Github Action for sending Workflow run results to Teams'
 branding:
   icon: message-square
   color: blue
@@ -9,13 +9,13 @@ inputs:
     description: 'You must manually pass in secrets.GITHUB_TOKEN'
     required: true
   teams_webhook_url:
-    description: 'Your slack webhook url'
+    description: 'Your teams webhook url'
     required: true
   channel:
-    description: 'Override the default channel configured by the SLACK_WEBHOOK_URL'
+    description: 'Override the default channel configured by the TEAMS_WEBHOOK_URL'
     required: false
   name:
-    description: 'Override the default name configured by the Slack SLACK_WEBHOOK_URL'
+    description: 'Override the default name configured by the Teams TEAMS_WEBHOOK_URL'
     required: false
   icon_emoji:
     description: 'Override the default webhook icon with an emoji. Uses emoji code: https://www.webfx.com/tools/emoji-cheat-sheet/'
@@ -24,11 +24,11 @@ inputs:
     description: 'Override the default webhook icon with an image via url.'
     required: false
   include_jobs:
-    description: 'Should the slack notification include individual job status and run times'
+    description: 'Should the teams notification include individual job status and run times'
     required: true
     default: "true"
   include_commit_message:
-    description: 'Should the slack notification include the head commit message'
+    description: 'Should the teams notification include the head commit message'
     required: true
     default: "false"
   jobs_to_fetch:
