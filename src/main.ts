@@ -351,7 +351,7 @@ class MSTeams {
   async notify(url: any, payload: any) {
     const client = new IncomingWebhook(url);
     const response = await client.sendRawAdaptiveCard(payload);
-
+    core.info(`Generated payload for Microsoft Teams:\n${JSON.stringify(payload, null, 2)}`);
     if (response.status !== 202) {
       throw new Error('Failed to send notification to Microsoft Teams.\n' + 'Response:\n' + JSON.stringify(response, null, 2));
     }
