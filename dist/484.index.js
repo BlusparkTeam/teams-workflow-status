@@ -3,7 +3,7 @@ exports.id = 484;
 exports.ids = [484];
 exports.modules = {
 
-/***/ 8484:
+/***/ 18484:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
 // ESM COMPAT FLAG
@@ -254,7 +254,7 @@ const ansiStyles = assembleStyles();
 // EXTERNAL MODULE: external "node:process"
 var external_node_process_ = __webpack_require__(1708);
 // EXTERNAL MODULE: external "node:os"
-var external_node_os_ = __webpack_require__(8161);
+var external_node_os_ = __webpack_require__(48161);
 // EXTERNAL MODULE: external "node:tty"
 var external_node_tty_ = __webpack_require__(7066);
 ;// CONCATENATED MODULE: ./node_modules/ms-teams-webhook/node_modules/chalk/source/vendor/supports-color/index.js
