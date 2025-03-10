@@ -86488,7 +86488,7 @@ function main() {
                     break;
                 case 'cancelled':
                 case 'skipped':
-                    job_status_icon = '⃠';
+                    job_status_icon = '>>';
                     break;
                 default:
                     // case 'failure'
@@ -86591,7 +86591,7 @@ class MSTeams {
                         {
                             type: 'Image',
                             style: 'person',
-                            url: 'https://github.githubassets.com/favicon.ico',
+                            url: 'https://w7.pngwing.com/pngs/646/324/png-transparent-github-computer-icons-github-logo-monochrome-head-thumbnail.png',
                             altText: 'github',
                             size: 'small'
                         }
