@@ -86502,16 +86502,28 @@ function main() {
                 type: "ColumnSet",
                 columns: [
                     {
-                        type: "TextBlock",
-                        text: `${job_status_icon}`,
-                        wrap: true,
-                        horizontalAlignment: "Center"
+                        type: "Column",
+                        width: "auto",
+                        items: [
+                            {
+                                type: "TextBlock",
+                                text: `${job_status_icon}`,
+                                wrap: true,
+                                horizontalAlignment: "Center"
+                            }
+                        ]
                     },
                     {
-                        type: "TextBlock",
-                        size: "Medium",
-                        weight: "Lighter",
-                        text: `[${job.name}](${job.html_url}) \`${job_duration}\``
+                        type: "Column",
+                        width: "stretch",
+                        items: [
+                            {
+                                type: "TextBlock",
+                                size: "Medium",
+                                weight: "Lighter",
+                                text: `[${job.name}](${job.html_url}) \`${job_duration}\``
+                            }
+                        ]
                     }
                 ]
             };
@@ -86525,7 +86537,7 @@ function main() {
         const branch_url = `[${workflow_run.head_branch}](${workflow_run.repository.html_url}/tree/${workflow_run.head_branch})`;
         const workflow_run_url = `[${workflow_run.run_number}](${workflow_run.html_url})`;
         // Example: Success: AnthonyKinson's `push` on `master` for pull_request
-        let status_string = `${workflow_msg} ${github_1.context.actor}'s \`${github_1.context.eventName}\` on \`${branch_url}\``;
+        let status_string = `${workflow_msg} ${github_1.context.actor}'s ${github_1.context.eventName} on ${branch_url}`;
         // Example: Workflow: My Workflow #14 completed in `1m 30s`
         const details_string = `Workflow: ${github_1.context.workflow} ${workflow_run_url} completed in \`${workflow_duration}\``;
         // Build Pull Request string if required
@@ -86555,7 +86567,6 @@ class MSTeams {
             weight: 'Bolder',
             text: [status_string]
                 .join('\n'),
-            style: 'heading',
             wrap: true
         };
         const detailLog = [
